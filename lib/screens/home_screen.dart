@@ -9,13 +9,76 @@ import 'package:invent_app_redesign/screens/history_page.dart';
 import 'package:invent_app_redesign/screens/settings_page.dart';
 import 'package:invent_app_redesign/screens/login_screen.dart';
 import 'package:invent_app_redesign/screens/all_products_page.dart';
+import 'package:invent_app_redesign/screens/edit_profile_page.dart'; 
+import 'package:invent_app_redesign/screens/orders_page.dart'; 
+
+
+PreferredSizeWidget? customAppBar(BuildContext context, User? user) {
+  if (user == null) return null;
+
+  return AppBar(
+    backgroundColor: Colors.white,
+    elevation: 4,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        bottom: Radius.circular(20),
+      ),
+    ),
+    title: Row(
+      children: [
+        const Icon(Icons.inventory_2_outlined, color: Colors.deepPurple),
+        const SizedBox(width: 8),
+        const Text(
+          'Invent',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ),
+    actions: [
+      IconButton(
+        icon: const Icon(Icons.refresh, color: Colors.black54),
+        onPressed: () {
+          // Қайта жүктеу логикасы
+        },
+      ),
+      Padding(
+        padding: const EdgeInsets.only(right: 12.0),
+        child: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EditProfilePage(user: user),
+              ),
+            );
+          },
+          child: CircleAvatar(
+            backgroundImage: user.photoURL != null
+                ? NetworkImage(user.photoURL!)
+                : null,
+            backgroundColor: Colors.deepPurple,
+            child: user.photoURL == null
+                ? const Icon(Icons.person, color: Colors.white)
+                : null,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+
 
 class NetworkStatus extends StatefulWidget {
   @override
   _NetworkStatusState createState() => _NetworkStatusState();
 }
 
-class _NetworkStatusState extends State<NetworkStatus> with SingleTickerProviderStateMixin {
+class _NetworkStatusState extends State<NetworkStatus>
+    with SingleTickerProviderStateMixin {
   bool isOffline = false;
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -68,7 +131,9 @@ class _NetworkStatusState extends State<NetworkStatus> with SingleTickerProvider
       if (!(draft['isSynced'] ?? false)) {
         try {
           if (draft['type'] == 'product') {
-            final docRef = await FirebaseFirestore.instance.collection('products').add({
+            final docRef = await FirebaseFirestore.instance
+                .collection('products')
+                .add({
               'name': draft['name'],
               'company': draft['company'],
               'quantity': draft['quantity'],
@@ -81,7 +146,9 @@ class _NetworkStatusState extends State<NetworkStatus> with SingleTickerProvider
             draft['isSynced'] = true;
             await productBox.put(docRef.id, draft);
           } else if (draft['type'] == 'history') {
-            final docRef = await FirebaseFirestore.instance.collection('history').add({
+            final docRef = await FirebaseFirestore.instance
+                .collection('history')
+                .add({
               'title': draft['title'],
               'action': draft['action'],
               'timestamp': FieldValue.serverTimestamp(),
@@ -126,34 +193,37 @@ class _NetworkStatusState extends State<NetworkStatus> with SingleTickerProvider
   Widget build(BuildContext context) {
     return isOffline
         ? SafeArea(
-      child: SizeTransition(
-        sizeFactor: _animation,
-        child: Container(
-          color: Colors.red[700],
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: const [
-                  Icon(Icons.wifi_off, color: Colors.white, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'OFFLINE MODE',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ],
+            child: SizeTransition(
+              sizeFactor: _animation,
+              child: Container(
+                color: Colors.redAccent,
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: const [
+                        Icon(Icons.wifi_off, color: Colors.white, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'OFFLINE MODE',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      onPressed: _refreshStatus,
+                      tooltip: 'Check connection',
+                    ),
+                  ],
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.refresh, color: Colors.white),
-                onPressed: _refreshStatus,
-                tooltip: 'Check connection',
-              ),
-            ],
-          ),
-        ),
-      ),
-    )
+            ),
+          )
         : const SizedBox.shrink();
   }
 }
@@ -271,29 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
               NetworkStatus(),
             ],
           ),
-          appBar: AppBar(
-            title: const Text('Invent'),
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 1,
-            actions: [
-              IconButton(
-                onPressed: _isRefreshing ? null : _refreshScreen,
-                icon: _isRefreshing
-                    ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF111827)),
-                  ),
-                )
-                    : const Icon(Icons.refresh),
-                tooltip: 'Refresh',
-                color: const Color(0xFF111827),
-              ),
-            ],
-          ),
+          appBar: customAppBar(context, user),
           bottomNavigationBar: BottomNavigationBar(
             backgroundColor: Colors.white,
             currentIndex: _selectedIndex,
@@ -370,8 +418,8 @@ class DashboardPage extends StatelessWidget {
         child: ListView(
           children: [
             const Text(
-              "Invent",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              "Manage your warehouse",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             GridView.count(
@@ -456,6 +504,43 @@ class DashboardPage extends StatelessWidget {
                     }
                   },
                 ),
+                QuickActionCard(
+                  icon: Icons.shopping_cart,
+                  label: 'Orders',
+                  onPressed: () {
+                    final user = FirebaseAuth.instance.currentUser;
+                    if (user == null) {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Restricted Access'),
+                          content: const Text('Please log in to create orders.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => LoginScreen()),
+                                );
+                              },
+                              child: const Text('Login'),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OrdersPage()),
+                      );
+                    }
+                  },
+                ),
                 const QuickActionCard(icon: Icons.add_shopping_cart, label: 'Low Stock'),
                 QuickActionCard(
                   icon: Icons.history,
@@ -517,20 +602,33 @@ class QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF1F2937),
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
         padding: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white),
-          const SizedBox(height: 10),
-          Text(label, style: const TextStyle(color: Colors.white)),
-        ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 30, color: Colors.indigo),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                  color: Colors.black87, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }

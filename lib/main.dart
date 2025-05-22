@@ -52,11 +52,11 @@ void main() async {
   await Hive.openBox('drafts');
   await Hive.openBox('settings');
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
+    options: FirebaseOptions(
       apiKey: "AIzaSyB8sJChHQrTY4P34RXizeAmkC5Ck_CQGxo",
       authDomain: "invent-423e7.firebaseapp.com",
       projectId: "invent-423e7",
-      storageBucket: "invent-423e7.firebasestorage.app",
+      storageBucket: "invent-423e7.appspot.com",
       messagingSenderId: "561252289076",
       appId: "1:561252289076:web:958bbdde521c65934d1861",
       measurementId: "G-LR76SNLKZN",
